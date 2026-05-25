@@ -151,7 +151,7 @@ export default function Practice() {
         : !showIPA
         ? "text-zinc-500"
         : result === null
-        ? "text-zinc-100"
+        ? "text-zinc-500"
         : result
         ? "text-green-400"
         : "text-red-400"
