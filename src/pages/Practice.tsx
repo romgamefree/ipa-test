@@ -82,6 +82,18 @@ export default function Practice() {
     setIndex((i) => Math.max(i - 1, 0));
   };
 
+  // ===== RANDOM =====
+  const random = () => {
+    if (words.length === 0) return;
+
+    let r = index;
+    while (r === index && words.length > 1) {
+      r = Math.floor(Math.random() * words.length);
+    }
+
+    setIndex(r);
+  };
+
   // ===== SPEAK =====
   const speak = () => {
     if (!("speechSynthesis" in window)) return;
@@ -119,44 +131,53 @@ export default function Practice() {
       {/* WORD */}
       <div className="text-3xl font-bold mb-2">{current.word}</div>
 
-      {/* IPA */}
+      {/* IPA + SPEAK */}
       <div className="text-xl text-zinc-200 mb-4 flex items-center justify-between">
         {/* LEFT */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowIPA((v) => !v)}
-            className={btnBase + " bg-zinc-800 hover:bg-zinc-700"}
+            className={`
+      ${btnBase}
+      bg-zinc-800 text-zinc-100
+      hover:bg-zinc-700
+    `}
           >
             {showIPA ? "Hide IPA" : "Show IPA"}
           </button>
 
-          <span className={ipaColor}>
+          <span
+            className="
+    font-mono text-lg font-semibold tracking-wide
+    text-zinc-900
+  "
+          >
             {loading ? "Generating IPA..." : showIPA ? ipa : "****"}
           </span>
         </div>
 
-        {/* RIGHT */}
+        {/* RIGHT SPEAK */}
         <button
           onClick={speak}
           disabled={!current?.word}
           className={`
-      px-6 py-2.5 rounded-full
-      font-semibold
-      transition-all duration-150
-      shadow-md shadow-emerald-500/20
+            px-6 py-2.5 rounded-full
+            font-semibold
+            transition-all duration-150
+            shadow-md shadow-emerald-500/20
 
-      ${
-        isSpeaking
-          ? "bg-emerald-400 animate-pulse"
-          : "bg-emerald-500 hover:bg-emerald-400"
-      }
+            ${
+              isSpeaking
+                ? "bg-emerald-400 animate-pulse"
+                : "bg-emerald-500 hover:bg-emerald-400"
+            }
 
-      text-black
-      active:scale-[0.97]
-      active:translate-y-[1px]
+            text-black
+            active:scale-[0.97]
+            active:translate-y-[1px]
 
-      disabled:opacity-40 disabled:cursor-not-allowed
-    `}
+            disabled:opacity-40 disabled:cursor-not-allowed
+          `}
         >
           {isSpeaking ? "Speaking..." : "Speak"}
         </button>
@@ -173,44 +194,59 @@ export default function Practice() {
 
       {/* BUTTONS */}
       <div className="flex gap-2 mb-4">
-        {/* PRIMARY */}
+        {/* CHECK */}
         <button
           onClick={check}
           className={`
-      ${btnBase}
-      bg-blue-500 text-white
-      hover:bg-blue-400
-      shadow-md shadow-blue-500/20
-    `}
+            ${btnBase}
+            bg-blue-500 text-white
+            hover:bg-blue-400
+            shadow-md shadow-blue-500/20
+          `}
         >
           Check
         </button>
 
-        {/* SECONDARY GROUP */}
+        {/* PREV */}
         <button
           onClick={prev}
           className={`
-      ${btnBase}
-      bg-zinc-200 text-black
-      hover:bg-zinc-300
-      shadow-sm
-    `}
+            ${btnBase}
+            bg-zinc-200 text-black
+            hover:bg-zinc-300
+            shadow-sm
+          `}
         >
           Prev
         </button>
 
+        {/* NEXT */}
         <button
           onClick={next}
           className={`
-      ${btnBase}
-      bg-zinc-200 text-black
-      hover:bg-zinc-300
-      shadow-sm
-    `}
+            ${btnBase}
+            bg-zinc-200 text-black
+            hover:bg-zinc-300
+            shadow-sm
+          `}
         >
           Next
         </button>
+
+        {/* RANDOM */}
+        <button
+          onClick={random}
+          className={`
+            ${btnBase}
+            bg-purple-500 text-white
+            hover:bg-purple-400
+            shadow-md shadow-purple-500/20
+          `}
+        >
+          Random
+        </button>
       </div>
+
       {/* KEYBOARD */}
       <IpaKeyboard
         onInsert={(v) => {
