@@ -115,13 +115,6 @@ export default function Practice() {
 
   if (!current) return <div>Loading words...</div>;
 
-  const ipaColor =
-    result === null
-      ? "text-zinc-900"
-      : result
-        ? "text-green-400"
-        : "text-red-400";
-
   const btnBase =
     "px-4 py-2 rounded-xl font-medium transition-all duration-150 " +
     "active:scale-[0.97] active:translate-y-[1px] " +
