@@ -15,6 +15,7 @@ export default function Practice() {
   const [ipa, setIpa] = useState("");
   const [userIpa, setUserIpa] = useState("");
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<null | boolean>(null);
 
   const [showIPA, setShowIPA] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -61,6 +62,7 @@ export default function Practice() {
   useEffect(() => {
     if (current?.word) {
       setUserIpa("");
+      setResult(null);
       generateIPA(current.word);
     }
   }, [current]);
@@ -139,13 +141,25 @@ export default function Practice() {
           </button>
 
           <span
-            className="
+  className={`
     font-mono text-lg font-semibold tracking-wide
-    text-zinc-900
-  "
-          >
-            {loading ? "Generating IPA..." : showIPA ? ipa : "****"}
-          </span>
+    transition-colors duration-200
+
+    ${
+      loading
+        ? "text-zinc-400"
+        : !showIPA
+        ? "text-zinc-500"
+        : result === null
+        ? "text-zinc-100"
+        : result
+        ? "text-green-400"
+        : "text-red-400"
+    }
+  `}
+>
+  {loading ? "Generating IPA..." : showIPA ? ipa : "****"}
+</span>
         </div>
 
         {/* RIGHT SPEAK */}
