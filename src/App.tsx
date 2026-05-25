@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+// @ts-ignore
 import ESpeakNg from "espeak-ng";
 import { IpaKeyboard } from "./IpaKeyboard";
 
