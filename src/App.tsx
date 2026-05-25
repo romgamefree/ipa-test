@@ -1,28 +1,36 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 // @ts-ignore
 import ESpeakNg from "espeak-ng";
-import { IpaKeyboard } from "./IpaKeyboard";
+import { IpaKeyboard } from "./components/IpaKeyboard";
 
 function App() {
   const [text, setText] = useState("I think she is here");
+
+  // default UK
+  const [voice, setVoice] = useState<"en-gb" | "en-us">("en-gb");
+
   const [ipa, setIpa] = useState("");
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const ipaInputRef = useRef<HTMLInputElement>(null);
+
+  const [userIpa, setUserIpa] = useState("");
 
   // ===== INSERT IPA =====
   const insertAtCursor = (value: string) => {
-    const el = textareaRef.current;
+    const el = ipaInputRef.current;
     if (!el) return;
 
     const start = el.selectionStart ?? 0;
     const end = el.selectionEnd ?? 0;
 
     const newText =
-      text.slice(0, start) + value + text.slice(end);
+      userIpa.slice(0, start) +
+      value +
+      userIpa.slice(end);
 
-    setText(newText);
+    setUserIpa(newText);
 
     requestAnimationFrame(() => {
       el.focus();
@@ -33,11 +41,15 @@ function App() {
 
   // ===== MOVE CURSOR =====
   const moveCursor = (dir: -1 | 1) => {
-    const el = textareaRef.current;
+    const el = ipaInputRef.current;
     if (!el) return;
 
     const pos = el.selectionStart ?? 0;
-    const newPos = Math.max(0, Math.min(text.length, pos + dir));
+
+    const newPos = Math.max(
+      0,
+      Math.min(userIpa.length, pos + dir)
+    );
 
     requestAnimationFrame(() => {
       el.focus();
@@ -47,7 +59,7 @@ function App() {
 
   // ===== BACKSPACE =====
   const backspace = () => {
-    const el = textareaRef.current;
+    const el = ipaInputRef.current;
     if (!el) return;
 
     const start = el.selectionStart ?? 0;
@@ -55,22 +67,26 @@ function App() {
 
     if (start !== end) {
       const newText =
-        text.slice(0, start) + text.slice(end);
-      setText(newText);
+        userIpa.slice(0, start) +
+        userIpa.slice(end);
+
+      setUserIpa(newText);
 
       requestAnimationFrame(() => {
         el.focus();
         el.setSelectionRange(start, start);
       });
+
       return;
     }
 
     if (start === 0) return;
 
     const newText =
-      text.slice(0, start - 1) + text.slice(end);
+      userIpa.slice(0, start - 1) +
+      userIpa.slice(end);
 
-    setText(newText);
+    setUserIpa(newText);
 
     requestAnimationFrame(() => {
       el.focus();
@@ -78,11 +94,17 @@ function App() {
     });
   };
 
-  const clear = () => setText("");
+  const clear = () => setUserIpa("");
+
   const space = () => insertAtCursor(" ");
 
   // ===== IPA GENERATE =====
-  const convert = async (voice: string) => {
+  const convert = async (currentText: string, currentVoice: string) => {
+    if (!currentText.trim()) {
+      setIpa("");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -94,8 +116,8 @@ function App() {
           "-q",
           "--ipa=3",
           "-v",
-          voice,
-          text,
+          currentVoice,
+          currentText,
         ],
       });
 
@@ -106,66 +128,192 @@ function App() {
       setIpa(result.trim());
     } catch (err) {
       console.error(err);
+
       setIpa("Error generating IPA");
     } finally {
       setLoading(false);
     }
   };
 
+  // ===== AUTO CONVERT =====
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      convert(text, voice);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [text, voice]);
+
   // ===== SPEAK =====
-  const speak = (voice: string) => {
+  const speak = () => {
     if (!("speechSynthesis" in window)) return;
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = voice;
+
+    utterance.lang = voice === "en-gb" ? "en-GB" : "en-US";
 
     window.speechSynthesis.cancel();
+
     window.speechSynthesis.speak(utterance);
   };
 
-  const runUS = async () => {
-    await convert("en-us");
-    speak("en-US");
-  };
+  const normalize = (s: string) =>
+    s
+      .replace(/\u200d/g, "") // remove zero-width joiner
+      .trim();
 
-  const runUK = async () => {
-    await convert("en-gb");
-    speak("en-GB");
+  const renderComparedIpa = () => {
+    const cleanIpa = normalize(ipa);
+    const cleanUser = normalize(userIpa);
+
+    let errorIndex = -1;
+
+    for (let i = 0; i < cleanUser.length; i++) {
+      if (cleanUser[i] !== cleanIpa[i]) {
+        errorIndex = i;
+        break;
+      }
+    }
+
+    return cleanIpa.split("").map((char, i) => {
+      let color = "text-zinc-500";
+
+      if (i < cleanUser.length) {
+        if (errorIndex === -1) {
+          color = "text-emerald-400";
+        } else {
+          color = i < errorIndex ? "text-emerald-400" : "text-red-400";
+        }
+      }
+
+      return (
+        <span key={i} className={color}>
+          {char}
+        </span>
+      );
+    });
   };
 
   return (
-    <div style={{ maxWidth: 900, margin: "40px auto", padding: 20 }}>
-      <h2>IPA Trainer</h2>
+    <div className="max-w-5xl mx-auto p-5 py-10">
+      {/* HEADER */}
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-3xl font-bold">IPA Trainer</h1>
+
+        <div className="flex items-center justify-between">
+          {/* ACCENT TOGGLE */}
+          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-full p-1">
+            <button
+              onClick={() => setVoice("en-gb")}
+              className={`
+        px-4 py-1.5 rounded-full text-sm font-medium transition
+        ${
+          voice === "en-gb"
+            ? "bg-white text-black"
+            : "text-zinc-400 hover:text-white"
+        }
+      `}
+            >
+              UK
+            </button>
+
+            <button
+              onClick={() => setVoice("en-us")}
+              className={`
+        px-4 py-1.5 rounded-full text-sm font-medium transition
+        ${
+          voice === "en-us"
+            ? "bg-white text-black"
+            : "text-zinc-400 hover:text-white"
+        }
+      `}
+            >
+              US
+            </button>
+          </div>
+
+          {/* PRIMARY ACTION */}
+         <button
+          onClick={speak}
+          className="
+            px-6 py-2.5 rounded-full
+            bg-emerald-500 text-black
+            font-semibold
+            hover:bg-emerald-400
+            active:scale-[0.98]
+            transition
+            shadow-md shadow-emerald-500/20
+            translate-x-2
+          "
+        >
+          Speak
+        </button>
+        </div>
+      </div>
 
       {/* TEXTAREA */}
       <textarea
-        ref={textareaRef}
+        placeholder="Input English"
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
-        style={{
-          width: "100%",
-          fontSize: 18,
-          padding: 10,
-          marginTop: 10,
-        }}
+        className="
+          w-full
+          rounded-2xl
+          border
+          border-zinc-700
+          px-4
+          py-3
+          text-lg
+          outline-none
+          focus:outline-none
+          focus:border-blue-500
+          focus:ring-2
+          focus:ring-blue-500/30
+        "
       />
 
-      {/* BUTTONS */}
-      <div style={{ marginTop: 20, display: "flex", gap: 10 }}>
-        <button onClick={runUS}>US (IPA + Speak)</button>
-        <button onClick={runUK}>UK (IPA + Speak)</button>
-        <button onClick={() => convert("en-us")}>Only IPA US</button>
-        <button onClick={() => convert("en-gb")}>Only IPA UK</button>
+      {/* IPA OUTPUT */}
+      <div
+        className="
+          mt-5
+          p-5
+          min-h-[90px]
+        "
+      >
+        <div className="mb-2 text-sm">
+          {voice === "en-gb" ? "UK IPA" : "US IPA"}
+        </div>
+
+        <div className="text-3xl leading-relaxed tracking-wide">
+          {loading ? "..." : renderComparedIpa()}
+        </div>
       </div>
 
-      {/* IPA OUTPUT */}
-      <div style={{ marginTop: 20, fontSize: 26 }}>
-        {loading ? "Generating..." : ipa}
+      {/* TYPE IPA HERE */}
+      <div className="mt-5">
+        <div className="mb-2 text-sm text-zinc-400">Your IPA</div>
+
+        <input
+          ref={ipaInputRef}
+          value={userIpa}
+          onChange={(e) => setUserIpa(e.target.value)}
+          className="
+            w-full
+            rounded-2xl
+            border
+            px-4
+            py-3
+            text-2xl
+            outline-none
+            focus:border-blue-500
+          "
+          placeholder="Type IPA here..."
+        />
       </div>
 
       {/* KEYBOARD */}
-      <div style={{ marginTop: 30 }}>
+      <div className="mt-8">
         <IpaKeyboard
           onInsert={insertAtCursor}
           onMove={moveCursor}

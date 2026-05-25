@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Delete, ChevronDown, ChevronUp, Keyboard } from "lucide-react";
 import { IPA_KEYS, IPA_TABS, type IpaTab } from "./ipa-data";
-import { cn } from "./lib/utils";
+import { cn } from "../lib/utils";
 
 interface Props {
   onInsert: (s: string) => void;
