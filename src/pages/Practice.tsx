@@ -15,7 +15,6 @@ export default function Practice() {
   const [ipa, setIpa] = useState("");
   const [userIpa, setUserIpa] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<null | boolean>(null);
 
   const [showIPA, setShowIPA] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
