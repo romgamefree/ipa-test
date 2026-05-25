@@ -61,7 +61,6 @@ export default function Practice() {
   useEffect(() => {
     if (current?.word) {
       setUserIpa("");
-      setResult(null);
       generateIPA(current.word);
     }
   }, [current]);
