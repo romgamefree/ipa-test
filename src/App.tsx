@@ -5,13 +5,14 @@ import Header from "./components/Header";
 
 export default function App() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans">
       <Header />
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/practice" element={<Practice />} />
-      </Routes>
+      <main className="flex-1">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/practice" element={<Practice />} />
+        </Routes>
+      </main>
     </div>
   );
 }
